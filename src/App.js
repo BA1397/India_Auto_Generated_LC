@@ -569,7 +569,7 @@ function createCombinations(loadCombination, combinations, loadNames, factor = 1
     console.error('loadCases is not an array.');
     return [];
   }
-
+// hello everyone
   const result = [];
 
   for (const loadCase of loadCombination.loadCases) {
