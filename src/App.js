@@ -16,7 +16,6 @@ import { VerifyUtil, VerifyDialog } from "@midasit-dev/moaui";
 
 
 function App() {
-// const [loadCombinations, setLoadCombinations] = useState([]);
 const [selectedLoadCombinationIndex, setSelectedLoadCombinationIndex] = useState(-1);
 const [typeDropdownIndex, setTypeDropdownIndex] = useState(-1); 
 const [showDialog, setDialogShowState] = React.useState(false);
@@ -25,6 +24,8 @@ const fileInputRef = useRef(null);
 const [loadCaseDropdownIndex, setLoadCaseDropdownIndex] = useState(-1);
 const [signDropdownIndex, setSignDropdownIndex] = useState(null);
 const [editingFactor, setEditingFactor] = useState({ index: null, factor: null });
+let loadNames = [];
+
 
   const toggleLoadCaseDropdown = (index) => {
     setLoadCaseDropdownIndex(loadCaseDropdownIndex === index ? -1 : index);
@@ -50,22 +51,16 @@ const [editingFactor, setEditingFactor] = useState({ index: null, factor: null }
   };
 
   const handleFactorChange = (combinationIndex, caseIndex, factor,e) => {
-    const updatedLoadCombinations = [...loadCombinations];
-
-  // Access the specific loadCase within loadCombinations
+  const updatedLoadCombinations = [...loadCombinations];
   const loadCaseToUpdate = updatedLoadCombinations[combinationIndex].loadCases[caseIndex];
-
-  // Update the factor value based on factorKey
   loadCaseToUpdate[factor] = e;
-
-  // Update state with the modified loadCombinations
   setLoadCombinations(updatedLoadCombinations);
   };
 
   const handleFactorBlur = () => {
     setEditingFactor({ index: null, factor: null });
   };
-  const loadNames = [
+  loadNames = [
     "Dead Load",
     "Tendon Primary",
     "Creep Primary",
@@ -75,7 +70,7 @@ const [editingFactor, setEditingFactor] = useState({ index: null, factor: null }
     "Shrinkage Secondary",
   ];
   
-  const Import_Load_Cases = async () => {
+ async function Import_Load_Cases() {
     const stct = await midasAPI("GET", "/db/stct");
     const stldData = await midasAPI("GET", "/db/stld");
     const smlc = await midasAPI("GET", "/db/smlc");
@@ -202,7 +197,7 @@ const [editingFactor, setEditingFactor] = useState({ index: null, factor: null }
   };
   
 
-Import_Load_Cases();
+// Import_Load_Cases();
 // const [excelData, setExcelData] = useState([]);
 
 
@@ -211,34 +206,432 @@ function importLoadCombinationInput(data) {
     // setShowExcelReader(false); 
 }
 
-function getLoadCaseFactors(loadCaseName, combinations,loadNames) {
+
+  const handleLoadCombinationClick = (index) => {
+    setSelectedLoadCombinationIndex(index);
+  };
+
+function Export_Load_Combination_Input() {
+ 
+}
+function getLoadCaseFactors(loadCaseName, combinations) {
   for (const combo of combinations) {
-      for (const loadCase of combo.loadCases) {
-        if (loadNames.includes(loadCase.loadCaseName)) {
-          return loadCase;
-        }
-      }
+    const cleanedLoadCaseName = loadCaseName.replace(/\s*\(CB\)$/, '');
+
+    // Check if cleanedLoadCaseName matches combo.loadCombinations
+    if (cleanedLoadCaseName === combo.loadCombination) {
+      return combo;
+    }
   }
   return null;
 }
-function generateAddCombinations(loadCases, loadCombinations) {
-  const result = [];
-  for (const loadCaseName of loadCases) {
-    result.push(...createCombinations(loadCaseName, loadCombinations));
+// function createCombinations(loadCombination, combinations, loadNames, factor = 1) {
+//   if (!Array.isArray(loadCombination.loadCases)) {
+//     console.error('loadCases is not an array.');
+//     return [];
+//   }
+
+//   const result = [];
+//   console.log(loadCombination.loadCases);
+
+//   if (loadCombination.type === "Add") {
+//     // Collect results into different arrays based on factors
+//     const factorArrays = Array.from({ length: 5 }, () => []);
+
+//     for (const loadCase of loadCombination.loadCases) {
+//       if (loadNames.includes(loadCase.loadCaseName)) {
+//         for (let i = 1; i <= 5; i++) {
+//           const factorKey = `factor${i}`;
+//           if (loadCase[factorKey] !== undefined) {
+//             const newFactor = factor * loadCase[factorKey];
+//             factorArrays[i - 1].push({ name: loadCase.loadCaseName, sign: loadCase.sign, factor: newFactor });
+//             // factorArrays[i - 1].push({ name: loadCase.loadCaseName, sign: loadCase.sign === "+" ? "-" : "+", factor: newFactor });
+//           }
+//         }
+//       } else {
+//         const nestedLoadCase = getLoadCaseFactors(loadCase.loadCaseName, combinations);
+//         if (nestedLoadCase && Array.isArray(nestedLoadCase.loadCases)) {
+//           const nestedResults = createCombinations(nestedLoadCase, combinations, loadNames, factor);
+//           for (let i = 0; i < factorArrays.length; i++) {
+//             factorArrays[i].push(...nestedResults);
+//           }
+//         } else {
+//           console.error(`Load case ${loadCase.loadCaseName} not found in combinations.`);
+//         }
+//       }
+//     }
+//     result.push(...factorArrays.filter(array => array.length > 0));
+
+//   } else if (loadCombination.type === "Either") {
+//     for (const loadCase of loadCombination.loadCases) {
+//       if (loadNames.includes(loadCase.loadCaseName)) {
+//         for (let i = 1; i <= 5; i++) {
+//           const factorKey = `factor${i}`;
+//           if (loadCase[factorKey] !== undefined) {
+//             const newFactor = factor * loadCase[factorKey];
+//             const eitherResult = [{ name: loadCase.loadCaseName, sign: loadCase.sign, factor: newFactor }];
+//             // eitherResult.push({ name: loadCase.loadCaseName, sign: loadCase.sign === "+" ? "-" : "+", factor: newFactor });
+//             result.push(eitherResult);
+//           }
+//         }
+//       } else {
+//         const nestedLoadCase = getLoadCaseFactors(loadCase.loadCaseName, combinations);
+//         if (nestedLoadCase && Array.isArray(nestedLoadCase.loadCases)) {
+//           const nestedResults = createCombinations(nestedLoadCase, combinations, loadNames, factor);
+//           result.push(...nestedResults);
+//         } else {
+//           console.error(`Load case ${loadCase.loadCaseName} not found in combinations.`);
+//         }
+//       }
+//     }
+//   }
+
+//   return result;
+// }
+
+// function createCombinations(loadCombination, combinations, loadNames, factor = 1) {
+//   if (!Array.isArray(loadCombination.loadCases)) {
+//     console.error('loadCases is not an array.');
+//     return [];
+//   }
+
+//   const result = [];
+//   console.log(loadCombination.loadCases);
+
+//   if (loadCombination.type === "Add") {
+//     for (const loadCase of loadCombination.loadCases) {
+//       if (loadNames.includes(loadCase.loadCaseName)) {
+//         for (let i = 1; ; i++) {
+//           const factorKey = `factor${i}`;
+//           if (loadCase[factorKey] === undefined) break;
+//           const newFactor = factor * loadCase[factorKey];
+//           if (!result[i - 1]) result[i - 1] = [];
+//           result[i - 1].push({ name: loadCase.loadCaseName, sign: loadCase.sign, factor: newFactor });
+//         }
+//       } else {
+//         const nestedLoadCase = getLoadCaseFactors(loadCase.loadCaseName, combinations);
+//         if (nestedLoadCase && Array.isArray(nestedLoadCase.loadCases)) {
+//           const nestedResults = createCombinations(nestedLoadCase, combinations, loadNames, factor);
+//           for (let i = 0; i < nestedResults.length; i++) {
+//             if (!result[i]) result[i] = [];
+//             result[i].push(...nestedResults[i]);
+//           }
+//         } else {
+//           console.error(`Load case ${loadCase.loadCaseName} not found in combinations.`);
+//         }
+//       }
+//     }
+
+//   } else if (loadCombination.type === "Either") {
+//     for (const loadCase of loadCombination.loadCases) {
+//       if (loadNames.includes(loadCase.loadCaseName)) {
+//         for (let i = 1; ; i++) {
+//           const factorKey = `factor${i}`;
+//           if (loadCase[factorKey] === undefined) break;
+//           const newFactor = factor * loadCase[factorKey];
+//           result.push([{ name: loadCase.loadCaseName, sign: loadCase.sign, factor: newFactor }]);
+//         }
+//       } else {
+//         const nestedLoadCase = getLoadCaseFactors(loadCase.loadCaseName, combinations);
+//         if (nestedLoadCase && Array.isArray(nestedLoadCase.loadCases)) {
+//           const nestedResults = createCombinations(nestedLoadCase, combinations, loadNames, factor);
+//           result.push(...nestedResults);
+//         } else {
+//           console.error(`Load case ${loadCase.loadCaseName} not found in combinations.`);
+//         }
+//       }
+//     }
+//   }
+
+//   return result;
+// }
+
+// function createCombinations(loadCombination, combinations, loadNames, factor = 1) {
+//   if (!Array.isArray(loadCombination.loadCases)) {
+//     console.error('loadCases is not an array.');
+//     return [];
+//   }
+
+//   const result = [];
+
+//   for (const loadCase of loadCombination.loadCases) {
+//     if (loadNames.includes(loadCase.loadCaseName)) {
+//       // Case 1: LoadCase is present in loadNames
+//       const caseResult = [];
+//       for (let i = 1; ; i++) {
+//         const factorKey = `factor${i}`;
+//         if (loadCase[factorKey] === undefined) break;
+//         const newFactor = factor * loadCase[factorKey];
+//         caseResult.push({ name: loadCase.loadCaseName, sign: loadCase.sign, factor: newFactor });
+//       }
+//       result.push(caseResult);
+
+//     } else {
+//       // Case 2: LoadCase not in loadNames, search in combinations
+//       const nestedLoadCase = getLoadCaseFactors(loadCase.loadCaseName, combinations);
+//       if (nestedLoadCase && Array.isArray(nestedLoadCase.loadCases)) {
+//         const nestedResults = createCombinations(nestedLoadCase, combinations, loadNames, factor);
+//         if (loadCombination.type === "Add") {
+//           for (let i = 0; i < nestedResults.length; i++) {
+//             if (!result[i]) result[i] = [];
+//             result[i].push(...nestedResults[i]);
+//           }
+//         } else if (loadCombination.type === "Either") {
+//           result.push(...nestedResults);
+//         }
+//       } else {
+//         console.error(`Load case ${loadCase.loadCaseName} not found in combinations.`);
+//       }
+//     }
+//   }
+
+//   return result;
+// }
+// function createCombinations(loadCombination, combinations, loadNames, factor = 1) {
+//   if (!Array.isArray(loadCombination.loadCases)) {
+//     console.error('loadCases is not an array.');
+//     return [];
+//   }
+
+//   const result = [];
+
+//   for (const loadCase of loadCombination.loadCases) {
+//     if (loadNames.includes(loadCase.loadCaseName)) {
+//       // Case 1: LoadCase is present in loadNames
+//       const caseResult = [];
+
+//       // Create subarrays for each factor defined
+//       for (let i = 1; ; i++) {
+//         const factorKey = `factor${i}`;
+//         if (loadCase[factorKey] === undefined) break;
+//         caseResult.push({ name: loadCase.loadCaseName, sign: loadCase.sign, factor: loadCase[factorKey] });
+//       }
+
+//       // If 'Add' type, nest arrays for each factor
+//       if (loadCombination.type === "Add") {
+//         const nestedResult = [];
+//         for (const factorObj of caseResult) {
+//           const nestedArray = [];
+//           nestedArray.push(factorObj);
+//           nestedResult.push(nestedArray);
+//         }
+//         result.push(nestedResult);
+
+//       } else if (loadCombination.type === "Either") {
+//         // If 'Either' type, push each factor as a separate array
+//         for (const factorObj of caseResult) {
+//           result.push([[factorObj]]);
+//         }
+//       }
+
+//     } else {
+//       // Case 2: LoadCase not in loadNames, search in combinations
+//       const nestedLoadCase = getLoadCaseFactors(loadCase.loadCaseName, combinations);
+//       if (nestedLoadCase && Array.isArray(nestedLoadCase.loadCases)) {
+//         const nestedResults = createCombinations(nestedLoadCase, combinations, loadNames, factor);
+//         result.push(nestedResults);
+//       } else {
+//         console.error(`Load case ${loadCase.loadCaseName} not found in combinations.`);
+//       }
+//     }
+//   }
+
+//   return result;
+// }
+// function createCombinations(loadCombination, combinations, loadNames, factor = 1) {
+//   if (!Array.isArray(loadCombination.loadCases)) {
+//     console.error('loadCases is not an array.');
+//     return [];
+//   }
+
+//   const result = [];
+
+//   for (const loadCase of loadCombination.loadCases) {
+//     if (loadNames.includes(loadCase.loadCaseName)) {
+//       // Case 1: LoadCase is present in loadNames
+//       const caseResults = [];
+
+//       // Create subarrays for each factor defined
+//       for (let i = 1; ; i++) {
+//         const factorKey = `factor${i}`;
+//         if (loadCase[factorKey] === undefined) break;
+//         caseResults.push({ name: loadCase.loadCaseName, sign: loadCase.sign, factor: loadCase[factorKey] });
+//       }
+
+//       if (loadCombination.type === "Add") {
+//         // If 'Add' type, each factor gets its own nested array
+//         for (const caseResult of caseResults) {
+//           result.push([caseResult]);
+//         }
+//       } else if (loadCombination.type === "Either") {
+//         // If 'Either' type, each factor is a separate option
+//         result.push(caseResults.map(cr => [cr]));
+//       }
+
+//     } else {
+//       // Case 2: LoadCase not in loadNames, search in combinations
+//       const nestedLoadCase = getLoadCaseFactors(loadCase.loadCaseName, combinations);
+//       if (nestedLoadCase && Array.isArray(nestedLoadCase.loadCases)) {
+//         const nestedResults = createCombinations(nestedLoadCase, combinations, loadNames, factor);
+//         result.push(...nestedResults);
+//       } else {
+//         console.error(`Load case ${loadCase.loadCaseName} not found in combinations.`);
+//       }
+//     }
+//   }
+
+//   return result;
+// }
+
+// Function to generate permutations and combinations of load combinations
+// function combi_pc(loadCombinations) {
+//   // Function to generate combinations of two arrays
+//   function combineArrays(arr1, arr2) {
+//     const result = [];
+//     for (let item1 of arr1) {
+//       for (let item2 of arr2) {
+//         result.push([...item1, ...item2]);
+//       }
+//     }
+//     return result;
+//   }
+
+//   // Function to generate permutations of an array
+//   function permuteArray(arr) {
+//     if (arr.length === 1) {
+//       return [arr];
+//     }
+//     const result = [];
+//     const firstElement = arr[0];
+//     const remainingElements = arr.slice(1);
+//     const recursivePermutations = permuteArray(remainingElements);
+//     for (let perm of recursivePermutations) {
+//       for (let i = 0; i <= perm.length; i++) {
+//         const permutation = [...perm.slice(0, i), firstElement, ...perm.slice(i)];
+//         result.push(permutation);
+//       }
+//     }
+//     return result;
+    
+//   }
+
+//   // Initialize combinations with the first set of load combinations
+//   let combinations = loadCombinations[0];
+
+//   // Iterate over the rest of the load combinations
+//   for (let i = 1; i < loadCombinations.length; i++) {
+//     const currentLoadComb = loadCombinations[i];
+//     const newCombinations = [];
+
+//     // Combine current combinations with currentLoadComb
+//     for (let comb of combinations) {
+//       for (let current of currentLoadComb) {
+//         newCombinations.push(combineArrays(comb, current));
+//       }
+//     }
+
+//     // Update combinations to include newCombinations
+//     combinations = newCombinations;
+//   }
+
+//   // Return all generated combinations
+//   return combinations;
+// }
+function combineArrays(arrays) {
+  // Base case: if there's only one array, return it as is
+  if (arrays.length === 1) {
+    return arrays[0];
   }
+
+  // Recursive case: combine the first array with the result of combining the rest of the arrays
+  const result = [];
+  const [firstArray, ...restArrays] = arrays;
+
+  // Get combinations of the rest of the arrays
+  const restCombinations = combineArrays(restArrays);
+
+  // Combine each element of the first array with each element of the rest combinations
+  for (const element of firstArray) {
+    for (const restCombination of restCombinations) {
+      result.push([element, ...restCombination]);
+    }
+  }
+
   return result;
 }
 
-// Function to generate combinations for "Either" type
-function generateEitherCombinations(loadCases, loadCombinations) {
-  const result = [];
-  for (const loadCaseName of loadCases) {
-    result.push(...createCombinations(loadCaseName, loadCombinations));
+function generatePermutationsOfCombinations(basicCombinations) {
+  const allPermutations = combineArrays(basicCombinations);
+  return allPermutations;
+}
+function createCombinations(loadCombination, combinations, loadNames, factor = 1) {
+  if (!Array.isArray(loadCombination.loadCases)) {
+    console.error('loadCases is not an array.');
+    return [];
   }
+
+  const result = [];
+
+  for (const loadCase of loadCombination.loadCases) {
+    if (loadNames.includes(loadCase.loadCaseName)) {
+      // Case 1: LoadCase is present in loadNames
+      const caseResults = [];
+
+      // Create subarrays for each factor defined
+      for (let i = 1; ; i++) {
+        const factorKey = `factor${i}`;
+        if (loadCase[factorKey] === undefined) break;
+        caseResults.push([{ name: loadCase.loadCaseName, sign: loadCase.sign, factor: loadCase[factorKey] }]);
+      }
+
+      // Push each caseResult as a separate nested array
+      result.push(...caseResults);
+
+    } else {
+      // Case 2: LoadCase not in loadNames, search in combinations
+      const nestedLoadCase = getLoadCaseFactors(loadCase.loadCaseName, combinations);
+      if (nestedLoadCase && Array.isArray(nestedLoadCase.loadCases)) {
+        const nestedResults = createCombinations(nestedLoadCase, combinations, loadNames, factor);
+        result.push(nestedResults);
+      } else {
+        console.error(`Load case ${loadCase.loadCaseName} not found in combinations.`);
+      }
+    }
+  }
+
   return result;
 }
-// Function to create combinations
 
+
+  function findStrengthCombinations(combinations) {
+    return combinations.filter(combo => combo.active === "Strength");
+  }
+
+  function generateBasicCombinations(loadCombinations) {
+    const strengthCombinations = findStrengthCombinations(loadCombinations);
+    if (strengthCombinations.length === 0) {
+      console.error("No combinations with active set to 'Strength' found.");
+      return [];
+    }
+
+    const result = [];
+    for (const strengthCombination of strengthCombinations) {
+      result.push(...createCombinations(strengthCombination, loadCombinations, loadNames));
+    }
+    return result;
+  }
+
+  function Generate_Load_Combination() {
+    const basicCombinations = generateBasicCombinations(loadCombinations);
+    console.log(basicCombinations);
+    // const combi=combi_pc(basicCombinations)
+    // console.log(combi);
+    const permutations = generatePermutationsOfCombinations(basicCombinations);
+    console.log("All Possible Permutations of Combinations:", permutations);
+  }
+const toggleExcelReader = () => {
+  fileInputRef.current.click(); // Trigger the file input click
+};
 const [loadCombinations, setLoadCombinations] = useState([{ loadCombination: '', active: '', type: '', loadCases: [] }]);
   useEffect(() => {
     // Ensure there is always an additional empty row at the end
@@ -248,296 +641,6 @@ const [loadCombinations, setLoadCombinations] = useState([{ loadCombination: '',
       setInputValue(''); 
     }
   }, [loadCombinations]);
-
-  // const handleLoadCombinationChange = (index, field, value) => {
-  //   const updatedLoadCombinations = [...loadCombinations];
-  //   updatedLoadCombinations[index][field] = value;
-  //   setLoadCombinations(updatedLoadCombinations);
-  // };
-
-  const handleLoadCombinationClick = (index) => {
-    setSelectedLoadCombinationIndex(index);
-  };
-
-// let loadNames = [];
-// async function Import_Load_Cases() {
-//    const stct = await midasAPI("GET", "/db/stct");
-//     const stldData = await midasAPI("GET", "/db/stld");
-//     const smlc = await midasAPI("GET", "/db/smlc");
-//     const mvldid = await midasAPI("GET", "/db/mvldid");
-//     const mvld = await midasAPI("GET", "/db/mvld");
-//     const mvldch = await midasAPI("GET", "/db/mvldch");
-//     const mvldeu = await midasAPI("GET", "/db/mvldeu");
-//     const mvldbs = await midasAPI("GET", "/db/mvldbs");
-//     const mvldpl = await midasAPI("GET", "/db/mvldpl");
-//     const splc = await midasAPI("GET", "/db/splc");
-//     loadNames = [
-//       "Dead Load",
-//       "Tendon Primary",
-//       "Creep Primary",
-//       "Shrinkage Primary",
-//       "Tendon Secondary",
-//       "Creep Secondary",
-//       "Shrinkage Secondary",
-//     ];
-//     if (stct && stct.STCT) {
-//       for (const key in stct.STCT) {
-//         const item = stct.STCT[key];
-//         if (item.vEREC) {
-//           item.vEREC.forEach((erec) => {
-//             if (erec.LTYPECC) {
-//               loadNames.push(erec.LTYPECC);
-//               // loadCombinationNames_max.push(`${erec.LTYPECC}(CS)`);
-//               // loadCombinationNames_min.push(`${erec.LTYPECC}(CS)`);
-//               // cs_forces.Argument.LOAD_CASE_NAMES.push(`${erec.LTYPECC}(CS)`);
-//             }
-//           });
-//         }
-//       }
-//     }
-//     if (stldData && Object.keys(stldData)[0].length > 0) {
-//       const stldKeys = Object.keys(stldData)[0];
-//       if (stldKeys && stldKeys.length > 0) {
-//         for (const key in stldData[stldKeys]) {
-//           if (stldData[stldKeys].hasOwnProperty(key)) {
-//             const name = stldData[stldKeys][key].NAME;
-//             loadNames.push(name);
-//             // loadCombinationNames_max.push(`${name}(ST)`);
-//             // loadCombinationNames_min.push(`${name}(ST)`);
-//             // inputObject.Argument.LOAD_CASE_NAMES.push(`${name}(ST)`);
-//           }
-//         }
-//       }
-//     }
-//     if (smlc && smlc.SMLC) {
-//       for (const key in smlc.SMLC) {
-//         const item = smlc.SMLC[key];
-//         if (item.NAME) {
-//           const smlcName = item.NAME;
-//           loadNames.push(smlcName);
-//           // loadCombinationNames_max.push(`${smlcName}(SM:max)`);
-//           // loadCombinationNames_min.push(`${smlcName}(SM:min)`);
-//           // inputObject.Argument.LOAD_CASE_NAMES.push(`${smlcName}(SM:max)`);
-//           // inputObject.Argument.LOAD_CASE_NAMES.push(`${smlcName}(SM:min)`);
-//           // loadNames_getAdjusted.push(smlcName);
-//         }
-//       }
-//     }
-
-//     if (mvldid && mvldid.MVLDID) {
-//       for (const key in mvldid.MVLDID) {
-//         if (mvldid.MVLDID.hasOwnProperty(key)) {
-//           const item = mvldid.MVLDID[key];
-
-//           if (item && item.LCNAME) {
-//             loadNames.push(item.LCNAME);
-//             // loadCombinationNames_max.push(`${item.LCNAME}(MV:max)`);
-//             // loadCombinationNames_min.push(`${item.LCNAME}(MV:min)`);
-//             // inputObject.Argument.LOAD_CASE_NAMES.push(`${item.LCNAME}(MV:max)`);
-//             // inputObject.Argument.LOAD_CASE_NAMES.push(`${item.LCNAME}(MV:min)`);
-//             // loadNames_getAdjusted.push(item.LCNAME);
-//           }
-//         }
-//       }
-//     }
-//     console.log(mvldid);
-//     if (mvld && mvld.MVLD) {
-//       for (const key in mvld.MVLD) {
-//         if (mvld.MVLD.hasOwnProperty(key)) {
-//           const item = mvld.MVLD[key];
-
-//           if (item && item.LCNAME) {
-//             loadNames.push(item.LCNAME);
-//             // loadCombinationNames_max.push(`${item.LCNAME}(MV:max)`);
-//             // loadCombinationNames_min.push(`${item.LCNAME}(MV:min)`);
-//             // inputObject.Argument.LOAD_CASE_NAMES.push(`${item.LCNAME}(MV:max)`);
-//             // inputObject.Argument.LOAD_CASE_NAMES.push(`${item.LCNAME}(MV:min)`);
-//             // loadNames_getAdjusted.push(item.LCNAME);
-//           }
-//         }
-//       }
-//     }
-//     if (mvldch && mvldch.MVLDCH) {
-//       for (const key in mvldch.MVLDCH) {
-//         if (mvldch.MVLDCH.hasOwnProperty(key)) {
-//           const item = mvldch.MVLDCH[key];
-
-//           if (item && item.LCNAME) {
-//             loadNames.push(item.LCNAME);
-//             // loadCombinationNames_max.push(`${item.LCNAME}(MV:max)`);
-//             // loadCombinationNames_min.push(`${item.LCNAME}(MV:min)`);
-//             // inputObject.Argument.LOAD_CASE_NAMES.push(`${item.LCNAME}(MV:max)`);
-//             // inputObject.Argument.LOAD_CASE_NAMES.push(`${item.LCNAME}(MV:min)`);
-//             // loadNames_getAdjusted.push(item.LCNAME);
-//           }
-//         }
-//       }
-//     }
-//     if (mvldeu && mvldeu.MVLDEU) {
-//       for (const key in mvldeu.MVLDEU) {
-//         if (mvldeu.MVLDEU.hasOwnProperty(key)) {
-//           const item = mvldeu.MVLDEU[key];
-
-//           if (item && item.LCNAME) {
-//             loadNames.push(item.LCNAME);
-//             // loadCombinationNames_max.push(`${item.LCNAME}(MV:max)`);
-//             // loadCombinationNames_min.push(`${item.LCNAME}(MV:min)`);
-//             // inputObject.Argument.LOAD_CASE_NAMES.push(`${item.LCNAME}(MV:max)`);
-//             // inputObject.Argument.LOAD_CASE_NAMES.push(`${item.LCNAME}(MV:min)`);
-//             // loadNames_getAdjusted.push(item.LCNAME);
-//           }
-//         }
-//       }
-//     }
-//     if (mvldbs && mvldbs.MVLDBS) {
-//       for (const key in mvldbs.MVLDBS) {
-//         if (mvldbs.MVLDBS.hasOwnProperty(key)) {
-//           const item = mvldbs.MVLDBS[key];
-
-//           if (item && item.LCNAME) {
-//             loadNames.push(item.LCNAME);
-//             // loadCombinationNames_max.push(`${item.LCNAME}(MV:max)`);
-//             // loadCombinationNames_min.push(`${item.LCNAME}(MV:min)`);
-//             // inputObject.Argument.LOAD_CASE_NAMES.push(`${item.LCNAME}(MV:max)`);
-//             // inputObject.Argument.LOAD_CASE_NAMES.push(`${item.LCNAME}(MV:min)`);
-//             // loadNames_getAdjusted.push(item.LCNAME);
-//           }
-//         }
-//       }
-//     }
-//     if (mvldpl && mvldpl.MVLDPL) {
-//       for (const key in mvldpl.MVLDPL) {
-//         if (mvldpl.MVLDPL.hasOwnProperty(key)) {
-//           const item = mvldpl.MVLDPL[key];
-
-//           if (item && item.LCNAME) {
-//             loadNames.push(item.LCNAME);
-//             // loadCombinationNames_max.push(`${item.LCNAME}(MV:max)`);
-//             // loadCombinationNames_min.push(`${item.LCNAME}(MV:min)`);
-//             // inputObject.Argument.LOAD_CASE_NAMES.push(`${item.LCNAME}(MV:max)`);
-//             // inputObject.Argument.LOAD_CASE_NAMES.push(`${item.LCNAME}(MV:min)`);
-//             // loadNames_getAdjusted.push(item.LCNAME);
-//           }
-//         }
-//       }
-//     }
-//     if (splc && splc.SPLC) {
-//       for (const key in splc.SPLC) {
-//         const item = splc.SPLC[key];
-//         if (item.NAME) {
-//           const spName = item.NAME;
-//           loadNames.push(spName);
-//           // loadCombinationNames_max.push(`${spName}(RS)`);
-//           // loadCombinationNames_min.push(`${spName}(RS)`);
-//           // inputObject.Argument.LOAD_CASE_NAMES.push(`${spName}(RS)`);
-//         }
-//       }
-//     }
-//     console.log(loadNames);
-
-   
-// }
-function Export_Load_Combination_Input() {
- 
-}
-// function createCombinations(loadCaseName, combinations, factor = 1) {
-//   const loadCase = getLoadCaseFactors(loadCaseName, combinations);
-//   if (loadCase) {
-//       const result = [];
-//       for (let i = 1; i <= 5; i++) {
-//           const factorKey = `factor${i}`;
-//           if (loadCase[factorKey] !== undefined) {
-//               const newFactor = factor * loadCase[factorKey];
-//               result.push({ loadCaseName, sign: loadCase.sign, factor: newFactor });
-//           }
-//       }
-//       return result;
-//   } else {
-//       for (const combo of combinations) {
-//           if (combo.loadCombination === loadCaseName) {
-//               const nestedResults = [];
-//               for (const nestedLoadCase of combo.loadCases) {
-//                   nestedResults.push(...createCombinations(nestedLoadCase.loadCaseName, combinations, factor));
-//               }
-//               return nestedResults;
-//           }
-//       }
-//   }
-//   return [];
-// }
-
-// Function to find the first combination with active set to "Strength"
-function findStrengthCombination(combinations) {
-  for (const combo of combinations) {
-      if (combo.active === "Strength") {
-          return combo;
-      }
-  }
-  return null;
-}
-
-// Function to generate basic combinations
-
-
-// Generate basic combinations using the updated method
-// const basicCombinations = generateBasicCombinations(loadCombinations);
-// 
-let  basicCombinations = null;
-function createCombinations(loadCaseName, loadCombinations,loadNames ,factor = 1) {
-  const loadCase = getLoadCaseFactors(loadCaseName, loadCombinations,loadNames);
-  if (loadCase) {
-      const result = [];
-      for (let i = 1; i <= 5; i++) {
-          const factorKey = `factor${i}`;
-          if (loadCase[factorKey] !== undefined) {
-              const newFactor = factor * loadCase[factorKey];
-              result.push({ loadNames, sign: loadCase.sign, factor: newFactor });
-          }
-      }
-      return result;
-  } else {
-      for (const combo of loadCombinations) {
-          if (combo.loadCombination === loadNames) {
-              const nestedResults = [];
-              for (const nestedLoadCase of combo.loadCases) {
-                  nestedResults.push(...createCombinations(nestedLoadCase.loadCaseName, loadCombinations, factor));
-              }
-              return nestedResults;
-          }
-      }
-  }
-  return [];
-}
-function generateBasicCombinations(loadCombinations) {
-  const strengthCombination = findStrengthCombination(loadCombinations);
-  if (!strengthCombination) {
-      console.error("No combination with active set to 'Strength' found.");
-      return [];
-  }
-
-  const result = [];
-  // for (const loadCaseName of strengthCombination.loadCases) {
-  //     result.push(...createCombinations(loadCaseName, loadCombinations,loadNames));
-  // }
-  for (const loadCaseName of strengthCombination.loadCases) {
-    if (strengthCombination.type === 'Add') {
-      result.push(...generateAddCombinations(strengthCombination.loadCases, loadCombinations));
-    } else if (strengthCombination.type === 'Either') {
-      result.push(...generateEitherCombinations(strengthCombination.loadCases, loadCombinations));
-    }
-  }
-  return result;
-}
-function Generate_Load_Combination() {
-  basicCombinations = generateBasicCombinations(loadCombinations);
-  console.log(basicCombinations);
-  
-}
-console.log(basicCombinations);
-const toggleExcelReader = () => {
-  fileInputRef.current.click(); // Trigger the file input click
-};
-
 const handleFileChange = (event) => {
   const file = event.target.files[0];
   const reader = new FileReader();
@@ -662,10 +765,9 @@ const [activeDropdownIndex, setActiveDropdownIndex] = useState(-1); // Track whi
       setDialogShowState(true);
     }
   }, []);
-  const addNewLoadCombination = () => {
-    setLoadCombinations([...loadCombinations, { loadCombination: '', active: '', type: '', loadCases: [] }]);
-  };
-  
+  // const addNewLoadCombination = () => {
+  //   setLoadCombinations([...loadCombinations, { loadCombination: '', active: '', type: '', loadCases: [] }]);
+  // };
   console.log(loadNames);
   console.log(loadCombinations);
   //Main UI
@@ -861,31 +963,6 @@ const [activeDropdownIndex, setActiveDropdownIndex] = useState(-1); // Track whi
       borderTop: '2px solid #ccc', // Adds a greyish line to the top border
       boxShadow: '0px -4px 5px -4px grey'
     }}>
-       {/* <Scrollbars height={450} width={460}>
-                {selectedLoadCombinationIndex >= 0 && loadCombinations[selectedLoadCombinationIndex].loadCases.map((loadCase, index) => (
-                  <div key={index} style={{ display: 'flex', flexDirection: 'row', borderBottom: '1px solid #ccc' }}>
-                    <div style={{ flex: '0 0 132px', padding: '5px', borderRight: '1px solid #ccc', color: 'black' }}>
-                      <Typography onClick={(e) => { e.stopPropagation(); toggleLoadCaseDropdown(loadCaseIndex); }}>
-                        {loadCase.loadCaseName}
-                    </Typography>
-                    {loadCaseDropdownIndex === loadCaseIndex && (
-                        <div style={{ position: 'absolute', backgroundColor: 'white', border: '1px solid #ccc', zIndex: 1, top: '100%', left: 0, right: 0 }}>
-                          {loadNames.map((name, nameIndex) => (
-                            <div key={nameIndex} onClick={() => handleLoadCaseOptionSelect(loadCombinationIndex, loadCaseIndex, name)} style={{ padding: '5px', cursor: 'pointer', backgroundColor: name === loadCase.loadCaseName ? '#f0f0f0' : 'white' }}>
-                              <Typography>{name}</Typography>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    <div style={{ flex: '1 1 25px', padding: '5px', borderRight: '1px solid #ccc', color: 'black' }}><Typography>{loadCase.sign}</Typography></div>
-                    <div style={{ flex: '1 1 30px', padding: '5px', borderRight: '1px solid #ccc', color: 'black' }}><Typography>{loadCase.factor1}</Typography></div>
-                    <div style={{ flex: '1 1 30px', padding: '5px', borderRight: '1px solid #ccc', color: 'black' }}><Typography>{loadCase.factor2}</Typography></div>
-                    <div style={{ flex: '1 1 30px', padding: '5px', borderRight: '1px solid #ccc', color: 'black' }}><Typography>{loadCase.factor3}</Typography></div>
-                    <div style={{ flex: '1 1 30px', padding: '5px', borderRight: '1px solid #ccc', color: 'black' }}><Typography>{loadCase.factor4}</Typography></div>
-                    <div style={{ flex: '1 1 30px', padding: '5px', color: 'black' }}><Typography>{loadCase.factor5}</Typography></div>
-                  </div>
-                ))}
-              </Scrollbars> */}
               <Scrollbars height={450} width={460}>
   {selectedLoadCombinationIndex >= 0 && loadCombinations[selectedLoadCombinationIndex].loadCases.map((loadCase, loadCaseIndex) => (
     <div key={loadCaseIndex} style={{ display: 'flex', flexDirection: 'row', borderBottom: '1px solid #ccc' }}>
